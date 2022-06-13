@@ -1,6 +1,7 @@
 resource "aws_ecs_cluster" "main" {
   name = var.project
 }
+
 resource "aws_ecs_capacity_provider" "main" {
   name = var.project
 
@@ -15,6 +16,7 @@ resource "aws_ecs_capacity_provider" "main" {
     }
   }
 }
+
 resource "aws_ecs_cluster_capacity_providers" "main" {
   cluster_name = aws_ecs_cluster.main.name
 
@@ -26,22 +28,41 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
     capacity_provider = aws_ecs_capacity_provider.main.name
   }
 }
+
 resource "aws_ecs_service" "node" {
   name            = "${var.project}-nodejs"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.node.arn
   desired_count   = 1
   network_configuration {
-    subnets          = [aws_subnet.main.id]
+    subnets          = [for subnet in aws_subnet.main : subnet.id]
     security_groups  = [aws_security_group.main.id]
     assign_public_ip = false
   }
-  # to be used with LBs
-  #   iam_role        = aws_iam_role.foo.arn
-  #   depends_on      = [aws_iam_role_policy.foo]
 
-
+  load_balancer {
+    target_group_arn = aws_lb_target_group.main.arn
+    container_name   = "nodejs"
+    container_port   = 3000
+  }
+  deployment_circuit_breaker {
+    enable   = false
+    rollback = false
+  }
+  deployment_controller {
+    type = "ECS"
+  }
+  lifecycle {
+    # terraform tries to delete default capacity provider strategy for some reason
+    ignore_changes = [
+      capacity_provider_strategy,
+    ]
+  }
+  # to be used with LBs ONLY without awsvpc network mode
+  # iam_role        = aws_iam_role.cluster_service_role.arn
+  # depends_on      = [aws_iam_policy.cluster_service_policy]
 }
+
 resource "aws_ecs_task_definition" "node" {
   family       = "nodejs"
   network_mode = "awsvpc"
@@ -53,8 +74,8 @@ resource "aws_ecs_task_definition" "node" {
       memory    = 256
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = 3000
+          hostPort      = 3000
         }
       ]
     }

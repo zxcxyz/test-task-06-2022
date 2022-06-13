@@ -11,6 +11,7 @@
           "ecs:RegisterContainerInstance",
           "ecs:StartTelemetrySession",
           "ecs:Submit*",
+          "ecs:UpdateContainerInstancesState",
           "ecr:GetAuthorizationToken",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
