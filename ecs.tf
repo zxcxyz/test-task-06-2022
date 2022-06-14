@@ -78,6 +78,14 @@ resource "aws_ecs_task_definition" "node" {
           hostPort      = 3000
         }
       ]
+      environment = [
+        {
+          name : "TODO_MONGO_CONNSTR"
+          # todo change to separate user
+          value : "mongodb://${aws_docdb_cluster.main.master_username}:${aws_docdb_cluster.main.master_password}@${aws_docdb_cluster_instance.main.endpoint}"
+          #mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+        }
+      ]
     }
   ])
 }
