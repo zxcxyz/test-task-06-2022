@@ -9,10 +9,10 @@ resource "aws_ecs_capacity_provider" "main" {
     auto_scaling_group_arn = aws_autoscaling_group.main.arn
 
     managed_scaling {
-      maximum_scaling_step_size = 1000
-      minimum_scaling_step_size = 1
+      maximum_scaling_step_size = var.autoscaling_max_step
+      minimum_scaling_step_size = var.autoscaling_min_step
       status                    = "ENABLED"
-      target_capacity           = 1
+      target_capacity           = var.autoscaling_max_utilization
     }
   }
 }
@@ -58,9 +58,6 @@ resource "aws_ecs_service" "node" {
       capacity_provider_strategy,
     ]
   }
-  # to be used with LBs ONLY without awsvpc network mode
-  # iam_role        = aws_iam_role.cluster_service_role.arn
-  # depends_on      = [aws_iam_policy.cluster_service_policy]
 }
 
 resource "aws_ecs_task_definition" "node" {
@@ -82,8 +79,10 @@ resource "aws_ecs_task_definition" "node" {
         {
           name : "TODO_MONGO_CONNSTR"
           # todo change to separate user
-          value : "mongodb://${aws_docdb_cluster.main.master_username}:${aws_docdb_cluster.main.master_password}@${aws_docdb_cluster_instance.main.endpoint}"
-          #mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+          #mongodb://dbuser:passpasspass@hubstaff-test.crv9iyyj5l4u.eu-west-1.docdb.amazonaws.com:27017/?retryWrites=false
+          #mongodb://dbuser:passpasspass@hubstaff-test.crv9iyyj5l4u.eu-west-1.docdb.amazonaws.com:27017/?retryWrites=false
+          # value : "mongodb://dbuser:passpasspass@hubstaff-test.crv9iyyj5l4u.eu-west-1.docdb.amazonaws.com:27017/?retryWrites=false"
+          value : "mongodb://${aws_docdb_cluster.main.master_username}:${aws_docdb_cluster.main.master_password}@${aws_docdb_cluster_instance.main.endpoint}:${aws_docdb_cluster_instance.main.port}/?retryWrites=false"
         }
       ]
     }

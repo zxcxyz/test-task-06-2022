@@ -1,9 +1,14 @@
-### Features
-Instances will refresh after template changing
+### How to launch
+1. Login with aws cli or provide credentials with AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY envs
+2. Create an S3 bucket to store state
+3. Add S3 bucket name and region to backend.tf
+4. Use:
+```bash
+terraform init
+terraform apply
+```
 
-### Issues
-EIP addresses on target group not appearing ;/
-https://www.architect.io/blog/2021-03-30/create-and-manage-an-aws-ecs-cluster-with-terraform/
+
 ### Install pre-commit
 To install pre-commit hooks, run the following
 ```bash
@@ -30,13 +35,3 @@ https://github.com/infrablocks/terraform-aws-ecs-cluster
 https://aws.amazon.com/premiumsupport/knowledge-center/ecs-instance-unable-join-cluster/
 https://aws.amazon.com/premiumsupport/knowledge-center/create-alb-auto-register/
 
-
-
-The container instance profile cluster-instance-profile-hubstaff-test is missing the following required permission(s): 
-['ecs:UpdateContainerInstancesState']
-Make sure that the container instance has all the recommended permissions.
-See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-awsmanpol.html#instance-iam-role-permissions
-
-The container instance is running in a public subnet without a public IP.
-A public subnet is a subnet that's associated with a route table that has a route to an internet gateway. Container instances need access to communicate with the Amazon ECS service endpoint. This can be through an interface VPC endpoint or through your container instances having public IP addresses.You need to make sure that the container instance has the public IP assigned while using public subnet in order to allow the communication with Amazon ECS service endpoint.
-See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_instances.html#container_instance_concepts

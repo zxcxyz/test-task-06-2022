@@ -3,12 +3,11 @@ resource "aws_placement_group" "main" {
   strategy = "spread"
 }
 resource "aws_autoscaling_group" "main" {
-  desired_capacity    = 2
-  min_size            = 1
-  max_size            = 2
+  desired_capacity    = 1
+  min_size            = var.autoscaling_min_size
+  max_size            = var.autoscaling_max_size
   placement_group     = aws_placement_group.main.id
   vpc_zone_identifier = [for subnet in aws_subnet.main : subnet.id]
-  # suspended_processes = ["ReplaceUnhealthy"]
 
   launch_template {
     id      = aws_launch_template.main.id
@@ -17,6 +16,13 @@ resource "aws_autoscaling_group" "main" {
 
   instance_refresh {
     strategy = "Rolling"
+  }
+
+  # managed by ecs
+  lifecycle {
+    ignore_changes = [
+      desired_capacity
+    ]
   }
   depends_on = [aws_subnet.main]
 }
@@ -47,23 +53,3 @@ resource "aws_launch_template" "main" {
   user_data = base64encode(templatefile("${path.module}/assets/bootstrap.sh.tmpl", { aws_ecs_cluster = aws_ecs_cluster.main.name }))
 }
 
-resource "aws_security_group" "main" {
-  name   = var.project
-  vpc_id = aws_vpc.main.id
-}
-resource "aws_security_group_rule" "in" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.main.id
-}
-resource "aws_security_group_rule" "out" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.main.id
-}

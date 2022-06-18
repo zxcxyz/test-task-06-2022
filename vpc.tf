@@ -5,7 +5,9 @@ variable "subnet_cidrs" {
 variable "public_subnet_cidrs" {
   default = ["10.0.3.0/24", "10.0.4.0/24"]
 }
-
+variable "db_subnet_cidrs" {
+  default = ["10.0.20.0/24", "10.0.21.0/24"]
+}
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -52,6 +54,9 @@ resource "aws_subnet" "main" {
   availability_zone       = data.aws_availability_zones.all.names[count.index]
   cidr_block              = var.subnet_cidrs[count.index]
   map_public_ip_on_launch = false
+  tags = {
+    Name = "Private"
+  }
 }
 resource "aws_subnet" "public" {
   count                   = 2
@@ -61,6 +66,16 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
   tags = {
     Name = "Public"
+  }
+}
+resource "aws_subnet" "db" {
+  count                   = 2
+  vpc_id                  = aws_vpc.main.id
+  availability_zone       = data.aws_availability_zones.all.names[count.index]
+  cidr_block              = var.db_subnet_cidrs[count.index]
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "DB"
   }
 }
 
@@ -89,13 +104,20 @@ resource "aws_route_table" "main" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.main.id
   }
+  tags = {
+    Name = "Private"
+  }
 }
 resource "aws_route_table_association" "main" {
   count          = length(aws_subnet.main)
   subnet_id      = aws_subnet.main[count.index].id
   route_table_id = aws_route_table.main.id
 }
-
+resource "aws_route_table_association" "db" {
+  count          = length(aws_subnet.db)
+  subnet_id      = aws_subnet.db[count.index].id
+  route_table_id = aws_route_table.main.id
+}
 # nat for instances to pull images
 resource "aws_eip" "main" {
   depends_on = [aws_internet_gateway.main]
