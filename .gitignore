@@ -1,0 +1,4 @@
+.terraform
+
+# bash script for local use, should contain aws keys
+local.sh
